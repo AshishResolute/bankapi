@@ -6,7 +6,7 @@ const filePath = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filePath)
 dotenv.config({path:path.join(dirname,'../dev.env')})
 
-
+console.log(process.env.JWT_KEY)
 
 const pool = new Pool({
     host:process.env.DB_HOST,

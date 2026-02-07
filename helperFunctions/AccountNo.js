@@ -1,4 +1,5 @@
 import db from '../database/connection.js'
+import crypto from 'crypto'
 async function checkUniqueAccountNo()
 {
     let isUnique=false
@@ -11,5 +12,9 @@ async function checkUniqueAccountNo()
     }
     return newAccountNo
 }
+
+// creating a random string
+console.log(crypto.randomBytes(16).toString('hex'))
+
 
 export default checkUniqueAccountNo;

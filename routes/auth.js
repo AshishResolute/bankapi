@@ -3,6 +3,15 @@ import joi from "joi";
 import db from "../database/connection.js";
 import newAccountNo from "../helperFunctions/AccountNo.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+const filePath = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filePath);
+dotenv.config({ path: path.join(dirname, "../dev.env") });
+
+console.log(`key is ${process.env.JWT_KEY}`);
 const router = express.Router();
 
 const userSchema = joi.object({
@@ -37,7 +46,6 @@ router.post("/signUp", async (req, res) => {
     let { email, userName, password, phoneNo } = req.body;
     console.log(req.body);
     let accountNo = await newAccountNo();
-    console.log(accountNo);
     if (accountNo) {
       await client.query("begin");
       let result1 = await client.query(
@@ -64,6 +72,58 @@ router.post("/signUp", async (req, res) => {
     res.status(400).json({ message: error.message });
   } finally {
     client.release();
+  }
+});
+
+const validateLoginInput = joi.object({
+  email: joi.string().email().lowercase().required(),
+  password: joi
+    .string()
+    .min(8)
+    .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Password must have atleast one Uppercase,lowerCase and special character",
+    }),
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    let { error, value } = validateLoginInput.validate(req.body);
+    if (error)
+      return res.status(400).json(error.details.map((err) => err.message));
+    let { email, password } = value;
+    let findUser = await db.query(`select email,id from users where email=$1`, [
+      email,
+    ]);
+    if (!(findUser.rowCount > 0))
+      return res.status(404).json({ message: `User not found,Try Again!` });
+    let hashedPassword = await db.query(
+      `select password_hash from userDetails where user_id=$1`,
+      [findUser.rows[0].id],
+    );
+    let verifyPassword = await bcrypt.compare(
+      password,
+      hashedPassword.rows[0].password_hash,
+    );
+    if (!verifyPassword)
+      return res
+        .status(400)
+        .json({ message: `Passwords Dont Match,Try Again or Reset Password!` });
+    let token = jwt.sign(
+      { id: findUser.rows[0].id, email: findUser.rows[0].email },
+      process.env.JWT_KEY,
+      { expiresIn: "15m" },
+    );
+    if (!token)
+      return res
+        .status(500)
+        .json({ message: `Internal server error!,token Generation Failed` });
+    res.status(200).json({ token });
+  } catch (err) {
+    res.status(500).json({ Message: err.message });
   }
 });
 

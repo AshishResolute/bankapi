@@ -1,6 +1,7 @@
 import express from 'express'
 import morgan from 'morgan'
-import auth from './auth.js'
+import auth from './auth.js';
+import crypto from 'crypto'
 const app = express()
 
 app.use(express.json())
@@ -10,6 +11,5 @@ app.use('/auth',auth)
 
 
 // creating 8 digit random number
-
 
 export default app
