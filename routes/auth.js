@@ -44,7 +44,6 @@ router.post("/signUp", async (req, res) => {
         .status(400)
         .json({ Message: error.details.map((err) => err.message) });
     let { email, userName, password, phoneNo } = req.body;
-    console.log(req.body);
     let accountNo = await newAccountNo();
     if (accountNo) {
       await client.query("begin");
@@ -52,15 +51,21 @@ router.post("/signUp", async (req, res) => {
         "insert into users(account_no,email,user_name,phone_no) values($1,$2,$3,$4) returning id",
         [accountNo, email, userName, phoneNo],
       );
-      console.log(result1.rows[0]);
       let id = result1.rows[0]?.id;
-      console.log(`Id generated is ${id}`);
       let hashedPassword = await bcrypt.hash(password, 10);
       if (id) {
         let result2 = await client.query(
           `insert into userDetails(user_id,password_hash) values($1,$2)`,
           [id, hashedPassword],
         );
+        let result3 = await client.query(
+          `insert into user_balance(user_id) values($1)`,
+          [id],
+        );
+        if (result3.rowCount === 0)
+          return res
+            .status(500)
+            .json({ Message: "Account_Type not set for User,Try Again!" });
         await client.query("commit");
         res.status(200).json(`Sign Up Successfull!`);
       } else {
