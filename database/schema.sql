@@ -37,4 +37,4 @@ create table if not exists user_transaction_details(
     user_transaction_type transaction_type,
     user_transaction_status transaction_status default 'Pending',
     transaction_time timestamp default now()
-)
+);

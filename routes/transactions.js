@@ -51,6 +51,35 @@ router.post('/credit',verifyToken,async(req,res)=>{
 });
 
 
+let verifyDebitAmount = joi.object({
+    debitAmount:joi.number().positive().required()
+})
+
+
+router.post('/debit',verifyToken,async(req,res)=>{
+    let user_id = req.user.id;
+    let client = await db.connect()
+    try{
+        let {error,value} = verifyDebitAmount.validate(req.body);
+        if(error) return res.status(400).json({Message:error.details.map(err=>err.message)});
+        let {debitAmount} = value;
+        await client.query('begin');
+        let checkBalance = await client.query(`select balance from user_balance where user_id = $1`,[user_id]);
+        if(debitAmount>parseFloat(checkBalance.rows[0].balance)) return res.status(400).json({message:`Insufficient Balance,Enter smaller Amount`});
+        let transactionId = createTransactionId();
+        let user_debit_amount = await client.query(`update user_balance set balance = balance-$1 where user_id=$2 returning balance`,[debitAmount,user_id]);
+        let updateTransactionId = await client.query(`insert into user_transaction_details(user_id,transaction_id,user_transaction_type,user_transaction_status) values($1,$2,$3,$4)`,[user_id,transactionId,'Debit','Success']);
+        if(updateTransactionId.rowCount>0)
+        await client.query('commit');
+    res.status(200).json({Message:`Amount of ${debitAmount} Debited from Account`,balance:`Account Current Balance ${user_debit_amount.rows[0].balance}`});
+    }
+    catch(err)
+    {
+        await client.query('rollback');
+        console.log(`Error Details : ${err.message}`);
+        res.status(500).json({Message:`Intenal Server Error`});
+    }
+})
 export default router;
 
 
