@@ -3,6 +3,7 @@ import verifyToken from "../middlewears/verifyToken.js";
 import db from "../database/connection.js";
 import bcrypt from "bcrypt";
 import joi from "joi";
+import { syncBuiltinESMExports } from "module";
 const router = express.Router();
 
 router.delete("/deleteUser", verifyToken, async (req, res) => {
@@ -66,6 +67,7 @@ router.get("/debitHistory", verifyToken, async (req, res) => {
     let {page,limit} = value;
     page = page||1;
     limit = limit||3;
+    // better let {page=1,limit=3} = value , same as above logic
     let offset = (page - 1) * limit;
     let user_id = req.user.id;
     let result = await db.query(
@@ -80,4 +82,23 @@ router.get("/debitHistory", verifyToken, async (req, res) => {
     res.status(500).json({ Message: `Internal Server Error` });
   }
 });
+
+router.get('/creditTransactions',verifyToken,async(req,res)=>{
+  try{
+    let user_id = req.user.id;
+    let {error,value} = querySchema.validate(req.query);
+    if(error) return res.status(400).json({Message:`Enter Valid Query parameters Details!`});
+    let {page=1,limit=3} = value;
+    let offset = (page-1)*limit
+    let result = await db.query(`select transaction_id,user_transaction_type,user_transaction_status,transaction_time from user_transaction_details where user_id=$1 and user_transaction_type=$2 order by transaction_time limit $3 offset $4`,[user_id,'Credit',limit,offset]);
+    if(result.rowCount===0) return res.status(404).json({Message:`No Transactions Found!`});
+    res.status(200).json({Transactions:result.rows});
+  }
+  catch(err){
+    console.log(`Error Details: ${err.details}`);
+    res.status(500).json({Message:`Internal Server Error!`});
+  }
+})
+
+
 export default router;
