@@ -19,7 +19,7 @@ const userSchema = joi.object({
   password: joi
     .string()
     .min(8)
-    .max(128)
+    .max(30)
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .required()
     .messages({
@@ -34,6 +34,80 @@ const userSchema = joi.object({
   phoneNo: joi.string().pattern(/^[0-9]{10}$/),
 });
 
+
+/**
+ * @swagger
+ * /auth/signUp:
+ *   post:
+ *     summary: Create a new user account
+ *     tags: [Authentication]
+ *     description: Register a new user with email, username, password and phone number. Automatically creates a bank account with unique account number.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - userName
+ *               - password
+ *               - confirmPassword
+ *               - phoneNo
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *                 description: User's email address (must be unique)
+ *               userName:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 30
+ *                 example: John Doe
+ *                 description: User's full name
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 128
+ *                 example: SecurePass123!
+ *                 description: Must contain uppercase, lowercase, number and special character
+ *               confirmPassword:
+ *                 type: string
+ *                 example: SecurePass123!
+ *                 description: Must match password
+ *               phoneNo:
+ *                 type: string
+ *                 pattern: '^[0-9]{10}$'
+ *                 example: "9876543210"
+ *                 description: 10-digit phone number
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: string
+ *               example: "Sign Up Successful!"
+ *       400:
+ *         description: Validation error or signup failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["Password must contain at least one uppercase character"]
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/signUp", async (req, res) => {
   let client = await db.connect();
   try {
@@ -84,7 +158,7 @@ const validateLoginInput = joi.object({
   password: joi
     .string()
     .min(8)
-    .max(128)
+    .max(30)
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .required()
     .messages({
@@ -92,6 +166,82 @@ const validateLoginInput = joi.object({
         "Password must have atleast one Uppercase,lowerCase and special character",
     }),
 });
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login to get authentication token
+ *     tags: [Authentication]
+ *     description: Authenticate user with email and password. Returns JWT token valid for 15 minutes.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *               password:
+ *                 type: string
+ *                 example: SecurePass123!
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   description: JWT token (valid for 15 minutes)
+ *       400:
+ *         description: Invalid credentials or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: string
+ *                   example: "Passwords don't match, try again or reset password!"
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User not found, try again!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+
+
+
+
+
+
+
 
 router.post("/login", async (req, res) => {
   try {

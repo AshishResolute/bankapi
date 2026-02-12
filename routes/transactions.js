@@ -70,7 +70,7 @@ router.post('/debit',verifyToken,async(req,res)=>{
                 await client.query('rollback');
                 return res.status(400).json({message:`Insufficient Balance,Enter smaller Amount`});
             }
-        let transactionId = createTransactionId();
+        let transactionId = createTransactionId()
         let user_debit_amount = await client.query(`update user_balance set balance = balance-$1 where user_id=$2 returning balance`,[debitAmount,user_id]);
         let updateTransactionId = await client.query(`insert into user_transaction_details(user_id,transaction_id,user_transaction_type,user_transaction_status) values($1,$2,$3,$4)`,[user_id,transactionId,'Debit','Success']);
         if(updateTransactionId.rowCount>0)
