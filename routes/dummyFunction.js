@@ -8,20 +8,4 @@
 // }
 // export default checkDetails
 
-import express from 'express';
-import fs from 'fs';
-import PDFDocument from 'pdfkit';
-const app = express.Router()
 
-router.get('/getPdf',async(req,res)=>{
-const doc = new PDFDocument();
-
-doc.pipe(fs.createWriteStream('ex.pdf'));
-
-doc.font('Times-Roman')
-.fontSize(16)
-.text('Testing pdf generation using PDFkit')
-
-
-doc.end()
-})

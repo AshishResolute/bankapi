@@ -11,7 +11,6 @@ const filePath = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filePath);
 dotenv.config({ path: path.join(dirname, "../dev.env") });
 
-console.log(`key is ${process.env.JWT_KEY}`);
 const router = express.Router();
 
 const userSchema = joi.object({
