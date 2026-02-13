@@ -11,6 +11,63 @@ let verifyCreditAmount = joi.object({
     creditAmount:joi.number().positive().required()
 });
 
+/**
+ * @swagger
+ * /transactions/credit:
+ *   post:
+ *     summary: Credit Amount From Your Account
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Login to Your account hit this route to make an credit from your account.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - creditAmount
+ *             properties:
+ *               creditAmount:
+ *                 type: number
+ *                 minimum: 0.01
+ *                 example: 1000
+ *                 description: Amount to credit (must be positive)
+ *     responses:
+ *       200:
+ *         description: Amount credited
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Message:
+ *                   type: string
+ *                   example: "Amount of 1000 Credited in your Account"
+ *                   description: Amount of ${crediAmount} will be credited and account balance will be shown.
+ *       400:
+ *         description: credit amount not valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: string
+ *                   example: "credit amount not valid"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 router.post('/credit',verifyToken,async(req,res)=>{
     let client = await db.connect();
     let user_id = req.user.id;

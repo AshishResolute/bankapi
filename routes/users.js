@@ -3,13 +3,53 @@ import verifyToken from "../middlewears/verifyToken.js";
 import db from "../database/connection.js";
 import bcrypt from "bcrypt";
 import joi from "joi";
-import { syncBuiltinESMExports } from "module";
 const router = express.Router();
+
+/**
+ * @swagger
+ * /users/deleteUser:
+ *   delete:
+ *     summary: Delete User Account
+ *     tags: [users]
+ *     description: Delete User account just login and hit this route no info needed
+ *     responses:
+ *       200:
+ *         description: Account Deleted,Successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Message:
+ *                   type: string
+ *                   example: "Account Deleted,Successfully"
+ *       400:
+ *         description: Invalid credentials or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: string
+ *                   example: "Passwords don't match, try again or reset password!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+
 
 router.delete("/deleteUser", verifyToken, async (req, res) => {
   try {
     let user_id = req.user.id;
-    console.log(user_id);
     let result = await db.query("delete from users where id=$1", [user_id]);
     if (result.rowCount === 0)
       return res.status(400).json({ Message: "Deletion failed!" });
@@ -33,7 +73,70 @@ let validateUserInput = joi.object({
         "Password must conatain atleast one Uppercase,one lowercase and one special character",
     }),
 });
-
+/**
+ * @swagger
+ * /users/updatePassword:
+ *   patch:
+ *     summary: Login and provide your Previous password and update it
+ *     tags: [users]
+ *     description: Login and reset your Password or create a new Password.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newPassword
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 example: SecurePass123!
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Message:
+ *                   type: string
+ *                   example: "Password Updated successfully! or Password Reset Successfull!"
+ *                   description: Password Updated successfully
+ *       400:
+ *         description: Invalid credentials or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: string
+ *                   example: "Passwords don't match, try again or reset password!"
+ *       404:
+ *         description: Passwords Don't Match
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: Array
+ *                   items:
+ *                     type: string
+ *                   example: ["Password must contain at least one uppercase character"]
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.patch("/updatePassword", verifyToken, async (req, res) => {
   try {
     let { error, value } = validateUserInput.validate(req.body);

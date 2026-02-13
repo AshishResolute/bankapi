@@ -20,8 +20,8 @@ const options={
             }
           ],
           components:{
-            securitySchemas:{
-                bearerAuth:{
+            securitySchemes:{
+                bearerAuth: {
                     type:'http',
                     scheme:'bearer',
                     bearerFormat:'JWT',
