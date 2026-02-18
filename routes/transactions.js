@@ -113,6 +113,63 @@ let verifyDebitAmount = joi.object({
 })
 
 
+/**
+ * @swagger
+ * /transactions/debit:
+ *   post:
+ *     summary: Debit Amount From Your Account
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Login to Your account hit this route to make an Debit from your account.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - debitAmount
+ *             properties:
+ *               debitAmount:
+ *                 type: number
+ *                 minimum: 0.01
+ *                 example: 1000
+ *                 description: Amount to debit (must be positive)
+ *     responses:
+ *       200:
+ *         description: Amount debited and will return current account balance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Message:
+ *                   type: string
+ *                   example: "Amount of 1000 Debited from your Account"
+ *                   description: Amount of ${debitAmount} will be debited and account balance will be shown.
+ *       400:
+ *         description: credit amount not valid or Insufficient Balance in your Account
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: string
+ *                   example: "Debit amount not valid or Insufficent Balance in your Account"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 router.post('/debit',verifyToken,async(req,res)=>{
     let user_id = req.user.id;
     let client = await db.connect()
