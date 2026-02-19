@@ -1,16 +1,20 @@
 {
   "name": "banksystem",
   "version": "1.0.0",
+    "type": "module",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node server/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+ "scripts": {
+  "start": "node server/server.js",
+  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+},
+  "jest":{
+    "testEnvironment":"node",
+    "transform":{}
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
@@ -27,7 +31,10 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
-    "sequelize-cli": "^6.6.5"
+    "sequelize-cli": "^6.6.5",
+    "supertest": "^7.2.2"
   }
 }

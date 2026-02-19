@@ -7,7 +7,7 @@ async function checkUniqueAccountNo()
     {
          newAccountNo  = Math.floor((Math.random()*(99999999-10000000))+10000000);
          let foundId = await db.query(`select account_no from users where account_no=$1`,[newAccountNo])
-         if(foundId.rows.length===0) isUnique=true
+         if(foundId.rowCount===0) isUnique=true
     }
     return newAccountNo
 }
