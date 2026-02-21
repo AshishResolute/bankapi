@@ -56,7 +56,7 @@ router.delete("/deleteUser", verifyToken, async (req, res) => {
     res.status(200).json({ Message: "Account Deleted,Successfully" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ Message: "Internal Server Error" });
   }
 });
 
@@ -143,7 +143,7 @@ router.patch("/updatePassword", verifyToken, async (req, res) => {
     if (error)
       return res.status(400).json(error.details.map((err) => err.message));
     let user_id = req.user.id;
-    let { newPassword } = value;
+    let  newPassword  = value.password;
     let hashedPassword = await bcrypt.hash(newPassword, 10);
     let result = await db.query(
       "update userDetails set password_hash=$1 where user_id=$2",
