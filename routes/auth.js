@@ -34,7 +34,6 @@ const userSchema = joi.object({
   phoneNo: joi.string().pattern(/^[0-9]{10}$/),
 });
 
-
 /**
  * @swagger
  * /auth/signUp:
@@ -235,14 +234,6 @@ const validateLoginInput = joi.object({
  *               $ref: '#/components/schemas/Error'
  */
 
-
-
-
-
-
-
-
-
 router.post("/login", async (req, res) => {
   try {
     let { error, value } = validateLoginInput.validate(req.body);
@@ -271,13 +262,41 @@ router.post("/login", async (req, res) => {
       process.env.JWT_KEY,
       { expiresIn: "15m" },
     );
+    let refreshToken = jwt.sign(
+      { id: findUser.rows[0].id, email: findUser.rows[0].email },
+      process.env.JWT_KEY,
+      { expiresIn: "1d" },
+    );
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 86400000 /*1 day in ms*/,
+    });
     if (!token)
       return res
         .status(500)
         .json({ message: `Internal server error!,token Generation Failed` });
-    res.status(200).json({ token });
+    res.status(200).json({ token, message: `logged in successfully!` });
   } catch (err) {
     res.status(500).json({ Message: err.message });
+  }
+});
+
+router.post("/refreshToken", async (req, res) => {
+  try {
+    let token = req.cookies.refreshToken;
+    if (!token) return res.status(400).json({ message: "token not recieved" });
+    let {id,email} = jwt.verify(token, process.env.JWT_KEY);
+    const accessToken = jwt.sign({id,email}, process.env.JWT_KEY, {
+      expiresIn: "15m",
+    });
+    if (!accessToken)
+      return res
+        .status(500)
+        .json({ message: `Internal Server Error,Token Generation Failed!` });
+    res.status(200).json({ accessToken });
+  } catch (error) {
+    console.log(error.message);
+    res.status(403).json({ message: `Invalid or refreshToken Expired` });
   }
 });
 
