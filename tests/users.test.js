@@ -1,5 +1,5 @@
 import request from "supertest";
-import { jest, describe, it, afterAll } from "@jest/globals";
+import { jest, describe, it, afterAll, test } from "@jest/globals";
 import db from "../database/connection.js";
 import app from "../routes/main.js";
 import jwt from "jsonwebtoken";
@@ -86,3 +86,72 @@ describe("DELETE /users/deleteUser", () => {
     });
   });
 });
+
+describe('GET /users/debitHistory',()=>{
+
+
+  it("should return 400 for Invalid query Details",async()=>{
+    const res = await request(app)
+    .get("/users/debitHistory?page=2&&limit=-1")
+    .set("Authorization",`Bearer ${testToken}`)
+
+     console.log(res.body)
+    expect(res.status).toBe(400);
+
+  })
+
+  it("Should return 200 status with the users debit History",async()=>{
+    db.query.mockResolvedValueOnce({rowCount:1})
+
+    const res = await request(app)
+    .get("/users/debitHistory?page=1")
+    .set("Authorization",`Bearer ${testToken}`)
+
+    expect(res.status).toBe(200)
+    // expect(Array.isArray(res.body)).toBe(true)
+  })
+
+  it("should return 404 if transaction not Found",async()=>{
+
+
+    db.query.mockResolvedValueOnce({rowCount:0})
+
+    const res = await request(app)
+    .get("/users/debitHistory?page=4")
+    .set("Authorization",`Bearer ${testToken}`)
+
+    expect(res.status).toBe(404)
+  })
+})
+
+describe("GET /users/creditTransactions",()=>{
+
+
+  it("should return 400 is invalid query details provided",async()=>{
+    const res = await request(app)
+    .get("/users/creditTransactions?page=-1")
+    .set("Authorization",`Bearer ${testToken}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it("should return 200 with credit History of user",async()=>{
+    db.query.mockResolvedValueOnce({rowCount:1})
+
+    const res = await request(app)
+    .get("/users/creditTransactions?page=1")
+    .set("Authorization",`Bearer ${testToken}`)
+
+    expect(res.status).toBe(200)
+  })
+
+  it("should return 404 if user Transaction not found",async()=>{
+    db.query.mockResolvedValueOnce({rowCount:0})
+
+    const res = await request(app)
+    .get("/users/creditTransactions?page=1")
+    .set("Authorization",`Bearer ${testToken}`)
+
+    expect(res.status).toBe(404)
+  })
+})
