@@ -3,6 +3,7 @@ import verifyToken from "../middlewears/verifyToken.js";
 import db from "../database/connection.js";
 import bcrypt from "bcrypt";
 import joi from "joi";
+import {limitter} from '../rate-limitter/limitter.js'
 const router = express.Router();
 
 /**
@@ -137,7 +138,7 @@ let validateUserInput = joi.object({
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch("/updatePassword", verifyToken, async (req, res) => {
+router.patch("/updatePassword",limitter, verifyToken, async (req, res) => {
   try {
     let { error, value } = validateUserInput.validate(req.body);
     if (error)
@@ -163,7 +164,7 @@ let querySchema = joi.object({
     limit:joi.number().positive().optional()
 })
 
-router.get("/debitHistory", verifyToken, async (req, res) => {
+router.get("/debitHistory",limitter, verifyToken, async (req, res) => {
   try {
     let {error,value} = querySchema.validate(req.query);
     if(error) return res.status(400).json({Message:`Enter Valid Query Details`});
@@ -186,7 +187,7 @@ router.get("/debitHistory", verifyToken, async (req, res) => {
   }
 });
 
-router.get('/creditTransactions',verifyToken,async(req,res)=>{
+router.get('/creditTransactions',limitter,verifyToken,async(req,res)=>{
   try{
     let user_id = req.user.id;
     let {error,value} = querySchema.validate(req.query);

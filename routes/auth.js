@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
+import {limitter,loginLimitter} from '../rate-limitter/limitter.js';
 import { fileURLToPath } from "url";
 const filePath = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filePath);
@@ -234,7 +235,7 @@ const validateLoginInput = joi.object({
  *               $ref: '#/components/schemas/Error'
  */
 
-router.post("/login", async (req, res) => {
+router.post("/login",loginLimitter, async (req, res) => {
   try {
     let { error, value } = validateLoginInput.validate(req.body);
     if (error)

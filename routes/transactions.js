@@ -3,6 +3,7 @@ import verifyToken from "../middlewears/verifyToken.js";
 import createTransactionId from "../helperFunctions/transactionId.js";
 import db from "../database/connection.js";
 import joi from "joi";
+import {limitter} from '../rate-limitter/limitter.js';
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ let verifyCreditAmount = joi.object({
  *               $ref: '#/components/schemas/Error'
  */
 
-router.post('/credit',verifyToken,async(req,res)=>{
+router.post('/credit',limitter,verifyToken,async(req,res)=>{
     let client = await db.connect();
     let user_id = req.user.id;
     let transactionId = createTransactionId();
@@ -170,7 +171,7 @@ let verifyDebitAmount = joi.object({
  *               $ref: '#/components/schemas/Error'
  */
 
-router.post('/debit',verifyToken,async(req,res)=>{
+router.post('/debit',limitter,verifyToken,async(req,res)=>{
     let user_id = req.user.id;
     let client = await db.connect()
     try{

@@ -5,10 +5,11 @@ import users from './users.js';
 import transactions from './transactions.js';
 import swaggerUi from 'swagger-ui-express';
 import {swaggerSpec} from '../config/swagger.js';
+import {limitter} from '../rate-limitter/limitter.js';
 const app = express()
 
 
-app.get('/health',(req,res)=>{
+app.get('/health',limitter,(req,res)=>{
     res.status(200).json({Message:`Services Running,${new Date()}`})
 })
 

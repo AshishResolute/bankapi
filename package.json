@@ -1,16 +1,16 @@
 {
   "name": "banksystem",
   "version": "1.0.0",
-    "type": "module",
+  "type": "module",
   "description": "",
   "main": "index.js",
- "scripts": {
-  "start": "node server/server.js",
-  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
-},
-  "jest":{
-    "testEnvironment":"node",
-    "transform":{}
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
@@ -26,6 +27,8 @@
     "pdfkit": "^0.17.2",
     "pg": "^8.18.0",
     "pg-hstore": "^2.3.4",
+    "rate-limit-redis": "^4.3.1",
+    "redis": "^5.11.0",
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
