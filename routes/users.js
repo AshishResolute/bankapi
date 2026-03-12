@@ -144,7 +144,12 @@ router.patch("/updatePassword",limitter, verifyToken, async (req, res) => {
     if (error)
       return res.status(400).json(error.details.map((err) => err.message));
     let user_id = req.user.id;
-    let  newPassword  = value.password;
+    let  {email,oldPassword,newPassword}  = value;
+    let findUser = db.query(`select email from users where email=$1 and id=$2`,[email,user_id]);
+    if(findUser.rowCount===0) return res.status(404).json({Message:`User Not Found!`});
+    let verifyOldPassword = db.query(`select password_hash from userDetails where user_id=$1`,[user_id])
+    let checkPassword = await bcrypt.compare(oldPassword,verifyOldPassword.rows[0].password_hash);
+    if(!checkPassword) return res.status(400).json({Message:`Password not matched,Try Again!`});
     let hashedPassword = await bcrypt.hash(newPassword, 10);
     let result = await db.query(
       "update userDetails set password_hash=$1 where user_id=$2",
