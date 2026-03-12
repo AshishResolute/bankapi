@@ -3,7 +3,7 @@ import verifyToken from "../middlewears/verifyToken.js";
 import db from "../database/connection.js";
 import bcrypt from "bcrypt";
 import joi from "joi";
-import {limitter} from '../rate-limitter/limitter.js'
+import { limitter } from "../rate-limitter/limitter.js";
 const router = express.Router();
 
 /**
@@ -46,8 +46,6 @@ const router = express.Router();
  *               $ref: '#/components/schemas/Error'
  */
 
-
-
 router.delete("/deleteUser", verifyToken, async (req, res) => {
   try {
     let user_id = req.user.id;
@@ -62,8 +60,17 @@ router.delete("/deleteUser", verifyToken, async (req, res) => {
 });
 
 let validateUserInput = joi.object({
-  email: joi.string().email().lowercase().required(),
-  password: joi
+  oldPassword: joi
+    .string()
+    .min(8)
+    .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Password must conatain atleast one Uppercase,one lowercase and one special character",
+    }),
+  newPassword: joi
     .string()
     .min(8)
     .max(128)
@@ -138,18 +145,30 @@ let validateUserInput = joi.object({
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch("/updatePassword",limitter, verifyToken, async (req, res) => {
+router.patch("/updatePassword", limitter, verifyToken, async (req, res) => {
   try {
     let { error, value } = validateUserInput.validate(req.body);
-    if (error)
-      return res.status(400).json(error.details.map((err) => err.message));
+    if (error) return res.status(400).json(`Validation failed`);
     let user_id = req.user.id;
-    let  {email,oldPassword,newPassword}  = value;
-    let findUser = db.query(`select email from users where email=$1 and id=$2`,[email,user_id]);
-    if(findUser.rowCount===0) return res.status(404).json({Message:`User Not Found!`});
-    let verifyOldPassword = db.query(`select password_hash from userDetails where user_id=$1`,[user_id])
-    let checkPassword = await bcrypt.compare(oldPassword,verifyOldPassword.rows[0].password_hash);
-    if(!checkPassword) return res.status(400).json({Message:`Password not matched,Try Again!`});
+    let { oldPassword, newPassword } = value;
+    if (oldPassword === newPassword)
+      return res
+        .status(400)
+        .json({ Message: `New Password cannot be the same as old one` });
+    let verifyOldPassword = await db.query(
+      `select password_hash from userDetails where user_id=$1`,
+      [user_id],
+    );
+    if (verifyOldPassword.rowCount === 0)
+      return res.status(400).json({ Message: `User not found!` });
+    let checkPasswordMatch = await bcrypt.compare(
+      oldPassword,
+      verifyOldPassword.rows[0].password_hash,
+    );
+    if (!checkPasswordMatch)
+      return res
+        .status(400)
+        .json({ Message: `Password not matched,Try Again!` });
     let hashedPassword = await bcrypt.hash(newPassword, 10);
     let result = await db.query(
       "update userDetails set password_hash=$1 where user_id=$2",
@@ -165,17 +184,18 @@ router.patch("/updatePassword",limitter, verifyToken, async (req, res) => {
 });
 
 let querySchema = joi.object({
-    page:joi.number().positive().required(),
-    limit:joi.number().positive().optional()
-})
+  page: joi.number().positive().required(),
+  limit: joi.number().positive().optional(),
+});
 
-router.get("/debitHistory",limitter, verifyToken, async (req, res) => {
+router.get("/debitHistory", limitter, verifyToken, async (req, res) => {
   try {
-    let {error,value} = querySchema.validate(req.query);
-    if(error) return res.status(400).json({Message:`Enter Valid Query Details`});
-    let {page,limit} = value;
-    page = page||1;
-    limit = limit||3;
+    let { error, value } = querySchema.validate(req.query);
+    if (error)
+      return res.status(400).json({ Message: `Enter Valid Query Details` });
+    let { page, limit } = value;
+    page = page || 1;
+    limit = limit || 3;
     // better let {page=1,limit=3} = value , same as above logic
     let offset = (page - 1) * limit;
     let user_id = req.user.id;
@@ -192,22 +212,27 @@ router.get("/debitHistory",limitter, verifyToken, async (req, res) => {
   }
 });
 
-router.get('/creditTransactions',limitter,verifyToken,async(req,res)=>{
-  try{
+router.get("/creditTransactions", limitter, verifyToken, async (req, res) => {
+  try {
     let user_id = req.user.id;
-    let {error,value} = querySchema.validate(req.query);
-    if(error) return res.status(400).json({Message:`Enter Valid Query parameters Details!`});
-    let {page=1,limit=3} = value;
-    let offset = (page-1)*limit
-    let result = await db.query(`select transaction_id,user_transaction_type,user_transaction_status,transaction_time from user_transaction_details where user_id=$1 and user_transaction_type=$2 order by transaction_time limit $3 offset $4`,[user_id,'Credit',limit,offset]);
-    if(result.rowCount===0) return res.status(404).json({Message:`No Transactions Found!`});
-    res.status(200).json({Transactions:result.rows});
-  }
-  catch(err){
+    let { error, value } = querySchema.validate(req.query);
+    if (error)
+      return res
+        .status(400)
+        .json({ Message: `Enter Valid Query parameters Details!` });
+    let { page = 1, limit = 3 } = value;
+    let offset = (page - 1) * limit;
+    let result = await db.query(
+      `select transaction_id,user_transaction_type,user_transaction_status,transaction_time from user_transaction_details where user_id=$1 and user_transaction_type=$2 order by transaction_time limit $3 offset $4`,
+      [user_id, "Credit", limit, offset],
+    );
+    if (result.rowCount === 0)
+      return res.status(404).json({ Message: `No Transactions Found!` });
+    res.status(200).json({ Transactions: result.rows });
+  } catch (err) {
     console.log(`Error Details: ${err.details}`);
-    res.status(500).json({Message:`Internal Server Error!`});
+    res.status(500).json({ Message: `Internal Server Error!` });
   }
-})
-
+});
 
 export default router;
