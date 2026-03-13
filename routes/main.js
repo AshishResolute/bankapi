@@ -8,7 +8,6 @@ import {swaggerSpec} from '../config/swagger.js';
 import {limitter} from '../rate-limitter/limitter.js';
 const app = express()
 
-
 app.get('/health',limitter,(req,res)=>{
     res.status(200).json({Message:`Services Running,${new Date()}`})
 })
