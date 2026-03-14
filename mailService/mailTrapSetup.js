@@ -9,7 +9,7 @@ const __dirname = path.dirname(filePath);
 
 dotenv.config({path:path.join(__dirname,'../dev.env')})
 
-const transport = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
     host:process.env.SMTP_HOST,
     port:process.env.SMTP_PORT,
     auth:{
@@ -18,4 +18,4 @@ const transport = nodemailer.createTransport({
     }
 })
 
-export default transport
+export default transporter

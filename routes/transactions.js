@@ -80,6 +80,8 @@ router.post('/credit',limitter,verifyToken,async(req,res)=>{
         let {creditAmount} = value;
         let {error:idError} = verifyTransactionId.validate(transactionId);
         if(idError) return res.status(500).json({Message:`Transaction Failed,Server Error`});
+        let email = await db.query(`select email from users where id=$1`,[user_id]);
+        if(email.rowCount===0) return res.status(404).json({message:'User not Found!'});
         await client.query('begin');
         let updateBalance = await client.query(`update user_balance set balance = balance +$1 where user_id =$2 returning balance`,[creditAmount,user_id]);
         if(updateBalance.rowCount===0){
@@ -88,8 +90,8 @@ router.post('/credit',limitter,verifyToken,async(req,res)=>{
         }
         let insertTransactionDetails = await client.query(`insert into user_transaction_details(user_id,transaction_id,user_transaction_type,user_transaction_status) values($1,$2,$3,$4)`,[user_id,transactionId,'Credit','Success']); 
         await client.query('commit');
-        await emailQueue.add('email-service',{Message:`${creditAmount} added to your Account`})
-        res.status(200).json({Message:`Amount of ${creditAmount} Credited in your Account`,Balance:updateBalance.rows[0].balance});
+        await emailQueue.add('email-service',{userMail:email.rows[0].email,transactionType:'credit',amount:creditAmount});
+        res.status(200).json({Message:`Amount of ${creditAmount} Credited in your Account,check Your Mail Once!`,Balance:updateBalance.rows[0].balance,});
     }
     catch(error)
     {
@@ -180,6 +182,8 @@ router.post('/debit',limitter,verifyToken,async(req,res)=>{
         let {error,value} = verifyDebitAmount.validate(req.body);
         if(error) return res.status(400).json({Message:error.details.map(err=>err.message)});
         let {debitAmount} = value;
+        let email = await db.query(`select email from users where id=$1`,[user_id]);
+        if(email.rowCount===0) return res.status(404).json({message:'User not Found!'});
         await client.query('begin');
         let checkBalance = await client.query(`select balance from user_balance where user_id = $1 for update`,[user_id]);
         if(debitAmount>parseFloat(checkBalance.rows[0].balance)) 
@@ -192,6 +196,7 @@ router.post('/debit',limitter,verifyToken,async(req,res)=>{
         let updateTransactionId = await client.query(`insert into user_transaction_details(user_id,transaction_id,user_transaction_type,user_transaction_status) values($1,$2,$3,$4)`,[user_id,transactionId,'Debit','Success']);
         if(updateTransactionId.rowCount>0)
         await client.query('commit');
+     await emailQueue.add('email-service',{userMail:email.rows[0].email,transactionType:'Debit',amount:debitAmount});
     res.status(200).json({Message:`Amount of ${debitAmount} Debited from Account`,balance:`Account Current Balance ${user_debit_amount.rows[0].balance}`});
     }
     catch(err)
