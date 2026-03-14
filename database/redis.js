@@ -11,7 +11,7 @@ dotenv.config({path:path.join(__dirname,'../dev.env')})
 
 
 const redisClient = createClient({
-    url:process.env.REDIS_URL,
+     url:process.env.REDIS_URL,
     socket: {
         tls: true,
         rejectUnauthorized: false
