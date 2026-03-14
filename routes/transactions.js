@@ -4,6 +4,7 @@ import createTransactionId from "../helperFunctions/transactionId.js";
 import db from "../database/connection.js";
 import joi from "joi";
 import {limitter} from '../rate-limitter/limitter.js';
+import emailQueue from "../queues/emailQueue.js";
 
 const router = express.Router();
 
@@ -87,6 +88,7 @@ router.post('/credit',limitter,verifyToken,async(req,res)=>{
         }
         let insertTransactionDetails = await client.query(`insert into user_transaction_details(user_id,transaction_id,user_transaction_type,user_transaction_status) values($1,$2,$3,$4)`,[user_id,transactionId,'Credit','Success']); 
         await client.query('commit');
+        await emailQueue.add('email-service',{Message:`${creditAmount} added to your Account`})
         res.status(200).json({Message:`Amount of ${creditAmount} Credited in your Account`,Balance:updateBalance.rows[0].balance});
     }
     catch(error)

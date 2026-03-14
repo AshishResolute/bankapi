@@ -13,11 +13,13 @@ dotenv.config({path:path.join(__dirname,'../dev.env')})
 
 console.log(process.env.REDIS_URL)
 const redisClient = createClient({
-    url:process.env.REDIS_URL,
-    socket: {
-        tls: true,
-        rejectUnauthorized: false
-    }
+    // url:process.env.REDIS_URL,
+    url:'redis://127.0.0.1:6379',
+    port:6379,
+    // socket: {
+    //     tls: true,
+    //     rejectUnauthorized: false
+    // }
 });
 
 redisClient.on('error',err=>console.log(`Redis Connection failed! ,Details:${err}`));

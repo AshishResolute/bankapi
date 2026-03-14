@@ -6,7 +6,16 @@ import transactions from './transactions.js';
 import swaggerUi from 'swagger-ui-express';
 import {swaggerSpec} from '../config/swagger.js';
 import {limitter} from '../rate-limitter/limitter.js';
+import emailQueue from '../queues/emailQueue.js';
 const app = express()
+
+
+async function addEmailJob(){
+  await emailQueue.add('email-service',{Testing:`Email Services under Construction!`})
+  console.log(`Job added to queue`)
+}
+
+await addEmailJob()
 
 app.get('/health',limitter,(req,res)=>{
     res.status(200).json({Message:`Services Running,${new Date()}`})
